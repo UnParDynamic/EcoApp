@@ -45,6 +45,26 @@
 			path = EcoAppUITests;
 			sourceTree = "<group>";
 		};
+		21CFCE292F56537D00CD6767 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		21CFCE312F56544800CD6767 /* Stores */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		21CFCE352F56546200CD6767 /* ViewModels */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		21CFCE3F2F5654AE00CD6767 /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Views;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +96,10 @@
 			isa = PBXGroup;
 			children = (
 				21CFCDDD2F5643A700CD6767 /* EcoApp */,
+				21CFCE292F56537D00CD6767 /* Models */,
+				21CFCE352F56546200CD6767 /* ViewModels */,
+				21CFCE3F2F5654AE00CD6767 /* Views */,
+				21CFCE312F56544800CD6767 /* Stores */,
 				21CFCDEB2F5643A800CD6767 /* EcoAppTests */,
 				21CFCDF52F5643A800CD6767 /* EcoAppUITests */,
 				21CFCDDC2F5643A700CD6767 /* Products */,
@@ -109,6 +133,10 @@
 			);
 			fileSystemSynchronizedGroups = (
 				21CFCDDD2F5643A700CD6767 /* EcoApp */,
+				21CFCE292F56537D00CD6767 /* Models */,
+				21CFCE312F56544800CD6767 /* Stores */,
+				21CFCE352F56546200CD6767 /* ViewModels */,
+				21CFCE3F2F5654AE00CD6767 /* Views */,
 			);
 			name = EcoApp;
 			packageProductDependencies = (

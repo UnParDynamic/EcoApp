@@ -11,7 +11,7 @@ import SwiftUI
 struct EcoAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootTabView()
         }
     }
 }
