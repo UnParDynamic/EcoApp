@@ -1,20 +1,12 @@
-//
-//  ScannerView.swift
-//  EcoApp
-//
-//  Created by Mar Reyes on 02/03/26.
-//
-
-
 import SwiftUI
+import AVFoundation
 
 struct ScannerView: View {
     @EnvironmentObject private var store: EcoAppStore
     @StateObject private var vm = ScannerViewModel()
 
-    @State private var showConfirm = false
-    @State private var garmentsText = "5"
-    @State private var selectedCenter = "Centro Tec"
+    @State private var cameraAuthorized = false
+    @State private var cameraPermissionChecked = false
 
     var body: some View {
         NavigationStack {
@@ -22,77 +14,107 @@ struct ScannerView: View {
                 RoundedRectangle(cornerRadius: 24)
                     .fill(.secondary.opacity(0.15))
                     .overlay {
-                        VStack(spacing: 12) {
-                            Image(systemName: "qrcode.viewfinder")
-                                .font(.system(size: 48))
-                            Text("Vista previa de escáner QR")
-                                .foregroundStyle(.secondary)
-                            Text("Aquí irá la cámara (AVFoundation)")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
+                        if cameraAuthorized {
+                            CameraScannerView(
+                                onCodeScanned: { code in
+                                    vm.scannedString = code
+                                    vm.parseScannedString(code)
+                                },
+                                onError: { message in
+                                    vm.errorMessage = message
+                                }
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
+                        } else {
+                            VStack(spacing: 12) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 40))
+                                Text("Se requiere acceso a cámara")
+                                    .foregroundStyle(.secondary)
+                                Button("Permitir cámara") {
+                                    requestCameraPermission()
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
+                            .padding()
                         }
-                        .padding()
                     }
-                    .frame(height: 320)
+                    .frame(height: 260)
 
-                Text("Escanea el QR del centro y registra tus prendas.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                TextField("ecoapp://dropoff?center_id=...&container_type=...", text: $vm.scannedString)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .textFieldStyle(.roundedBorder)
 
                 Button {
-                    vm.lastScannedCenterName = selectedCenter
-                    showConfirm = true
+                    vm.parseScannedString()
                 } label: {
-                    Text("Simular escaneo")
+                    Text("Procesar QR manual")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+
+                if let errorMessage = vm.errorMessage {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if let successMessage = vm.successMessage {
+                    Text(successMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.green)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
                 Spacer()
             }
             .padding()
             .navigationTitle("Escanear")
-            .sheet(isPresented: $showConfirm) {
-                confirmSheet
+            .onAppear {
+                if !cameraPermissionChecked {
+                    requestCameraPermission()
+                }
+            }
+            .sheet(isPresented: $vm.showConfirmSheet) {
+                if let payload = vm.scannedPayload {
+                    DropoffConfirmSheet(
+                        payload: payload,
+                        isSubmitting: vm.isSubmitting,
+                        errorMessage: vm.errorMessage,
+                        onConfirm: { garmentsCount in
+                            Task {
+                                await vm.submitDropoff(garmentsCount: garmentsCount, store: store)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 
-    private var confirmSheet: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Confirmar entrega").font(.title2).bold()
-            Text("Centro: \(vm.lastScannedCenterName ?? "—")")
-                .foregroundStyle(.secondary)
+    private func requestCameraPermission() {
+        cameraPermissionChecked = true
 
-            Divider()
-
-            Text("Número de prendas").font(.headline)
-
-            TextField("Ej. 5", text: $garmentsText)
-                .keyboardType(.numberPad)
-                .textFieldStyle(.roundedBorder)
-
-            let garments = Int(garmentsText) ?? 0
-            let earned = garments * store.pointsPerGarment
-
-            Text("Puntos a ganar: \(earned)")
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Button {
-                store.addDropOff(centerName: vm.lastScannedCenterName ?? "Centro", garments: garments)
-                showConfirm = false
-            } label: {
-                Text("Guardar y sumar puntos")
-                    .frame(maxWidth: .infinity)
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            cameraAuthorized = true
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    self.cameraAuthorized = granted
+                    if !granted {
+                        self.vm.errorMessage = "Permiso de cámara denegado. Actívalo en Configuración."
+                    }
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(garments <= 0)
+        case .denied, .restricted:
+            cameraAuthorized = false
+            vm.errorMessage = "Permiso de cámara denegado. Actívalo en Configuración."
+        @unknown default:
+            cameraAuthorized = false
+            vm.errorMessage = "No fue posible acceder a la cámara."
         }
-        .padding()
-        .presentationDetents([.medium])
     }
 }

@@ -1,11 +1,3 @@
-//
-//  CentersView.swift
-//  EcoApp
-//
-//  Created by Mar Reyes on 02/03/26.
-//
-
-
 import SwiftUI
 import MapKit
 
@@ -21,24 +13,44 @@ struct CentersView: View {
 
     var body: some View {
         NavigationStack {
-            Map(position: $cameraPosition) {
-                ForEach(vm.centers) { center in
-                    Annotation(center.name, coordinate: center.coordinate) {
-                        Button {
-                            vm.selectedCenter = center
-                        } label: {
-                            Image(systemName: "mappin.circle.fill")
-                                .font(.title2)
-                                .symbolRenderingMode(.hierarchical)
+            ZStack {
+                Map(position: $cameraPosition) {
+                    ForEach(vm.centers) { center in
+                        Annotation(center.name, coordinate: center.coordinate) {
+                            Button {
+                                vm.selectedCenter = center
+                            } label: {
+                                Image(systemName: "mappin.circle.fill")
+                                    .font(.title2)
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+                            .accessibilityLabel(center.name)
                         }
-                        .accessibilityLabel(center.name)
                     }
                 }
+                .ignoresSafeArea(edges: .bottom)
+
+                if vm.isLoading {
+                    ProgressView("Cargando centros...")
+                        .padding()
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                }
             }
-            .ignoresSafeArea(edges: .bottom)
             .navigationTitle("Centros")
             .sheet(item: $vm.selectedCenter) { center in
                 CenterDetailSheet(center: center)
+            }
+            .task {
+                await vm.fetchCenters()
+            }
+            .overlay(alignment: .bottom) {
+                if let errorMessage = vm.errorMessage {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .padding(10)
+                        .background(.red.opacity(0.12), in: Capsule())
+                        .padding(.bottom, 12)
+                }
             }
         }
     }

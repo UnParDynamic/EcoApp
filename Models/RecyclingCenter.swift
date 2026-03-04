@@ -1,33 +1,31 @@
-//
-//  RecyclingCenter.swift
-//  EcoApp
-//
-//  Created by Mar Reyes on 02/03/26.
-//
-
-
 import Foundation
 import CoreLocation
 
-struct RecyclingCenter: Identifiable, Hashable {
-    let id = UUID()
+struct RecyclingCenter: Identifiable, Hashable, Codable {
+    let centerId: String
     let name: String
-    let subtitle: String
-    let coordinate: CLLocationCoordinate2D
+    let address: String?
+    let latitude: Double
+    let longitude: Double
+
+    var id: String { centerId }
+
+    var subtitle: String {
+        if let address, !address.isEmpty {
+            return address
+        }
+        return centerId
+    }
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
 
     static func == (lhs: RecyclingCenter, rhs: RecyclingCenter) -> Bool {
-        lhs.id == rhs.id &&
-        lhs.name == rhs.name &&
-        lhs.subtitle == rhs.subtitle &&
-        lhs.coordinate.latitude == rhs.coordinate.latitude &&
-        lhs.coordinate.longitude == rhs.coordinate.longitude
+        lhs.centerId == rhs.centerId
     }
 
     func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-        hasher.combine(name)
-        hasher.combine(subtitle)
-        hasher.combine(coordinate.latitude)
-        hasher.combine(coordinate.longitude)
+        hasher.combine(centerId)
     }
 }
