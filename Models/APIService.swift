@@ -163,10 +163,10 @@ final class APIService {
             baseURL = overrideURL
         } else {
             #if targetEnvironment(simulator)
-            baseURL = URL(string: "http://127.0.0.1:8000")!
+            baseURL = URL(string: "http://")!
             #else
-            // Base por defecto para dispositivo físico.
-            baseURL = URL(string: "http://10.22.188.160:8000")!
+            // Base por defecto para dispositivo físico, placeholder
+            baseURL = URL(string: "http:/")!
             #endif
         }
     }
